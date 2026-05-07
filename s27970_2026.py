@@ -81,3 +81,83 @@ def validate_sequence_id(prompt: str) -> str:
             continue
 
         return seq_id
+
+def ask_yes_no(prompt: str) -> bool:
+    """Return True for a yes answer and False for a no answer."""
+    while True:
+        answer = input(prompt).strip().lower()
+
+        if answer in ("y", "yes"):
+            return True
+        if answer in ("n", "no"):
+            return False
+
+        print("Error: enter 'y' or 'n'.")
+
+#5.2
+def read_nucleotide_distribution() -> dict:
+    """Read and validate the percentage distribution of A, C, G and T from the user."""
+    while True:
+        distribution = {}
+
+        try:
+            for nucleotide in NUCLEOTIDES:
+                user_input = input(f"Enter percentage for {nucleotide}: ").strip().replace(",", ".")
+                value = float(user_input)
+                if value < 0:
+                    raise ValueError
+                distribution[nucleotide] = value
+        except ValueError:
+            print("Error: enter non-negative numeric values.")
+            continue
+
+        total = sum(distribution.values())
+        if abs(total - 100.0) < 0.0001:
+            return distribution
+
+        print(f"Error: the total percentage must be 100, but now it is {total:.2f}.")
+
+def generate_sequence_with_distribution(length: int, distribution: dict) -> str:
+    """Generate a random DNA sequence using a user-defined nucleotide distribution."""
+    weights = [distribution[nucleotide] for nucleotide in NUCLEOTIDES]
+    return "".join(random.choices(NUCLEOTIDES, weights=weights, k=length))
+
+#5.3
+def get_motif_from_user() -> str:
+    """Read a DNA motif from the user; an empty input means that motif search is skipped."""
+    while True:
+        motif = input("Enter a motif to search for, for example ATG, or press Enter to skip: ").strip().upper()
+
+        if motif == "":
+            return ""
+
+        if all(char in NUCLEOTIDES for char in motif):
+            return motif
+
+        print("Error: the motif can contain only A, C, G and T.")
+
+def find_motif_positions(sequence: str, motif: str) -> list:
+    """Return all motif positions in the sequence using 1-based biological indexing."""
+    motif = motif.upper()
+    positions = []
+
+    for index in range(0, len(sequence) - len(motif) + 1):
+        if sequence[index:index + len(motif)] == motif:
+            positions.append(index + 1)
+
+    return positions
+
+#5.4
+def complement_sequence(sequence: str) -> str:
+    """Return the complementary DNA strand."""
+    translation_table = str.maketrans("ACGT", "TGCA")
+    return sequence.translate(translation_table)
+
+def reverse_complement_sequence(sequence: str) -> str:
+    """Return the reverse complementary DNA strand."""
+    return complement_sequence(sequence)[::-1]
+
+#5.5
+def transcribe_dna_to_mrna(sequence: str) -> str:
+    """Return an mRNA sequence created by replacing T with U."""
+    return sequence.replace("T", "U")
