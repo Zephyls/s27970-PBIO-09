@@ -161,3 +161,68 @@ def reverse_complement_sequence(sequence: str) -> str:
 def transcribe_dna_to_mrna(sequence: str) -> str:
     """Return an mRNA sequence created by replacing T with U."""
     return sequence.replace("T", "U")
+
+def write_fasta_file(filename: str, records: list) -> None:
+    """Write all FASTA records to one output file."""
+    content = "\n".join(records)
+    Path(filename).write_text(content + "\n# EOF_1\n", encoding="utf-8")
+
+def print_stats(sequence: str, stats: dict) -> None:
+    """Print nucleotide statistics in a readable format."""
+    print(f"Sequence statistics (n={len(sequence)}):")
+    print(f"A: {stats['A']:.2f}%")
+    print(f"C: {stats['C']:.2f}%")
+    print(f"G: {stats['G']:.2f}%")
+    print(f"T: {stats['T']:.2f}%")
+    print(f"GC-content: {stats['GC']:.2f}%")
+
+def main():
+    """Run the program: read input, generate DNA, perform analyses and save FASTA output."""
+    length = validate_positive_int("Enter sequence length: ")
+    seq_id = validate_sequence_id("Enter sequence ID: ")
+    description = input("Enter sequence description: ")
+    name = input("Enter your name: ").strip()
+
+    use_custom_distribution = ask_yes_no("Do you want to enter a custom A/C/G/T distribution? (y/n): ")
+    if use_custom_distribution:
+        distribution = read_nucleotide_distribution()
+        sequence = generate_sequence_with_distribution(length, distribution)
+    else:
+        sequence = generate_sequence(length)
+
+    # Statistics are calculated only for the biological DNA sequence, without the inserted name.
+    stats = calculate_stats(sequence)
+
+    sequence_with_name = insert_name(sequence, name) if name else sequence
+    complement = complement_sequence(sequence)
+    reverse_complement = reverse_complement_sequence(sequence)
+    mrna = transcribe_dna_to_mrna(sequence)
+
+    records = [
+        format_fasta(seq_id, description, sequence_with_name),
+        format_fasta(f"{seq_id}_complement", "complementary strand", complement),
+        format_fasta(f"{seq_id}_reverse_complement", "reverse complementary strand", reverse_complement),
+        format_fasta(f"{seq_id}_mRNA", "transcribed mRNA sequence", mrna),
+    ]
+
+    output_filename = f"{seq_id}.fasta"
+    write_fasta_file(output_filename, records)
+
+    motif = get_motif_from_user()
+    if motif:
+        positions = find_motif_positions(sequence, motif)
+        if positions:
+            print(f"Motif {motif} was found at positions: {positions}")
+        else:
+            print(f"Motif {motif} was not found in the sequence.")
+
+    print(f"Sequence saved to file: {output_filename}")
+    print_stats(sequence, stats)
+    print("Complementary strand:")
+    print(complement)
+    print("Reverse complementary strand:")
+    print(reverse_complement)
+    print("Additional records saved in the file: complement, reverse_complement, mRNA.")
+
+if __name__ == "__main__":
+    main()
