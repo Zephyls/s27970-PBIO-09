@@ -1,5 +1,5 @@
 # Student number: s27970
-# Date: 06-05-2026
+# Date: 2026-04-30
 # Description: Random DNA sequence generator with FASTA output and additional sequence analyses.
 
 import random
